@@ -32,7 +32,7 @@ import tileworld.planners.TWPath;
  * Description:
  *
  */
-public class MyAgent extends TWAgent{
+public class MyAgent2 extends TWAgent{
 	private String name;
 	private int fuelX = -1;
 	private int fuelY = -1;
@@ -86,9 +86,14 @@ public class MyAgent extends TWAgent{
 	private int[][] cutxMatch = new int[5][3];
 	private int[][] cutyMatch = new int[5][3];
 
-	
+	static{
+		originalPositions[1] = new int[]{3,79};
+		originalPositions[2] = new int[]{68,24};
+		originalPositions[3] = new int[]{3,44};
+		originalPositions[4] = new int[]{62,64};
+	}
 
-	public MyAgent(String name, int xpos, int ypos, TWEnvironment env, double fuelLevel) {
+	public MyAgent2(String name, int xpos, int ypos, TWEnvironment env, double fuelLevel) {
 		super(xpos,ypos,env,fuelLevel);
 		this.name = name;
 		this.agentid = Character.getNumericValue((name.charAt(5)))-1;
@@ -535,18 +540,12 @@ public class MyAgent extends TWAgent{
 		if (closeTile != null && this.carriedTiles.size() < 3 && 
 				closeHole != null && this.carriedTiles.size() > 0) {
 			state = 3;
-			/**
-			 * zs都应该用path距离
-			 */
 			double dh = this.getDistanceTo(closeHole);
 			double dt = this.getDistanceTo(closeTile);
 			if (dh <= dt) {
 				targetX = closeHole.getX();
 				targetY = closeHole.getY();
 				if (!isGood(targetX, targetY)) {
-					/**
-					 * nearest_holeX在哪更新
-					 */
 					targetX = nearest_holeX;
 					targetY = nearest_holeY;
 				}
@@ -555,9 +554,6 @@ public class MyAgent extends TWAgent{
 				targetX = closeTile.getX();
 				targetY = closeTile.getY();
 				if (!isGood(targetX, targetY)) {
-					/**
-					 * nearest_holeX在哪更新
-					 */
 					targetX = nearest_tileX;
 					targetY = nearest_tileY;
 				}
@@ -646,10 +642,6 @@ public class MyAgent extends TWAgent{
 
 	protected TWThought think() {
 		step++;
-		if (this.getFuelLevel()<=1) {
-			System.out.println(name+" out of fuel!!!!!!!!!!!!!");
-		}
-		
 		if(this.firstBroadcast){
 			broadcast_position();
 		}
@@ -741,6 +733,7 @@ public class MyAgent extends TWAgent{
 								scan_initial_X--; 
 							}
 							earlyPath = PG.findPath(this.getX(), this.getY(), scan_initial_X, scan_initial_Y);
+							break;
 
 					} 
 					//System.out.println(name+": target=("+scan_initial_X+","+scan_initial_Y+")");
@@ -751,9 +744,7 @@ public class MyAgent extends TWAgent{
 						return new TWThought(TWAction.MOVE, earlyPath.getStep(earlyStep).getDirection());
 					} else {
 						earlyPath = PG.findPath(this.getX(), this.getY(), scan_initial_X, scan_initial_Y);
-						if (earlyPath != null) {
-							return new TWThought(TWAction.MOVE, earlyPath.getStep(earlyStep).getDirection());
-						} 			
+						return new TWThought(TWAction.MOVE, earlyPath.getStep(earlyStep).getDirection());
 					}
 
 				}else{
@@ -934,7 +925,7 @@ public class MyAgent extends TWAgent{
 				//				System.out.println(name+": substate="+s1_substate+"; current=("+this.getX()+","+this.getY()+"); target=("+this.targetX+","+this.targetY+")");
 				if (targetX == -1 && targetY == -1) {
 					state = 1;
-					System.out.println(name+" block over! substate="+s1_substate+"; current="+this.getX()+","+this.getY());
+					System.out.println(name+" block over! substate="+s1_substate);
 					return think();
 				}			
 				return new TWThought(TWAction.MOVE, earlyPath.getStep(earlyStep).getDirection());
@@ -946,7 +937,7 @@ public class MyAgent extends TWAgent{
 		} 
 
 
-		else if (this.getFuelLevel() > (this.getDistanceTo(fuelX, fuelY)+step/80+1)){
+		else if (this.getFuelLevel() > (this.getDistanceTo(fuelX, fuelY)+step/100+1)){
 			if (broadcasted_fuelstation == 0) {
 				message = "fuelstaion "+fuelX+" "+fuelY;
 				communicate();
@@ -958,9 +949,7 @@ public class MyAgent extends TWAgent{
 			// ---------------------------------------------------------------
 			state3();
 			//// ---------------------------------------------------------------
-			/**
-			 * 判断一下到target的距离 + target到fuel station距离（path距离）是否油还够，不够直接回加油站
-			 */
+
 			if (targetX>=0 && targetY>=0){
 				currentPath = PG.findPath(this.getX(), this.getY(), targetX, targetY);
 				currentStep = 0;
@@ -968,23 +957,18 @@ public class MyAgent extends TWAgent{
 					return new TWThought(TWAction.MOVE, currentPath.getStep(currentStep).getDirection());
 				}
 			} else {
-				/**
-				 * zs：改条件
-				 */
-//				if (this.getFuelLevel() / this.getDistanceTo(fuelX, fuelY)<2) {
-//					targetX = fuelX;
-//					targetY = fuelY;
-//				} else {
+				if (this.getFuelLevel() / this.getDistanceTo(fuelX, fuelY)<2) {
+					targetX = fuelX;
+					targetY = fuelY;
+				} else {
 					return new TWThought(TWAction.MOVE,getRandomDirection());
-//				}
+				}
 			}
 
 
 
 		} else {
-			//没更新视野 state3()
-			
-//			System.out.println(name+": FUELSTATION!!!!!");
+			System.out.println(name+": FUELSTATION!!!!!");
 			targetX = fuelX;
 			targetY = fuelY;
 			
@@ -1233,14 +1217,7 @@ public class MyAgent extends TWAgent{
 
 		for (int i=startX;i<=endX;i++) {
 			for (int j=startY;j<=endY;j++) {
-//				String s = shared_memory[i][j];
-				String s = null;
-				if(this.getMemory().getMemoryGrid().get(i, j) instanceof TWTile){
-					s = "Tile";
-				}else if(this.getMemory().getMemoryGrid().get(i, j) instanceof TWHole){
-					s = "Hole";
-				}
-				
+				String s = shared_memory[i][j];
 				if (s==null) {
 					continue;
 				}
@@ -1253,7 +1230,7 @@ public class MyAgent extends TWAgent{
 					}
 					path_distance = path.getpath().size();
 					direct_distance = Math.abs(i-this.getX())+Math.abs(j-this.getY());
-//					System.out.println("Tile: "+name+" "+this.getX()+","+this.getY()+" "+i+","+j+"; path_distance="+path_distance+"; direct_distance="+direct_distance);
+					System.out.println("Tile: "+name+" "+this.getX()+","+this.getY()+" "+i+","+j+"; path_distance="+path_distance+"; direct_distance="+direct_distance);
 					if (direct_distance <= tile_distance && path_distance == direct_distance) {
 						tile_distance = direct_distance;
 						result[0] = i;
@@ -1268,7 +1245,7 @@ public class MyAgent extends TWAgent{
 					}
 					path_distance = path.getpath().size();
 					direct_distance = Math.abs(i-this.getX())+Math.abs(j-this.getY());
-//					System.out.println("Hole: "+name+" "+this.getX()+","+this.getY()+" "+i+","+j+"; path_distance="+path_distance+"; direct_distance="+direct_distance);
+					System.out.println("Hole: "+name+" "+this.getX()+","+this.getY()+" "+i+","+j+"; path_distance="+path_distance+"; direct_distance="+direct_distance);
 					if (direct_distance <= hole_distance && path_distance == direct_distance) {
 						hole_distance = direct_distance;
 						result[3] = i;

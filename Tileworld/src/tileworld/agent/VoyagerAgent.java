@@ -1,3 +1,4 @@
+
 /*
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
@@ -6,7 +7,9 @@
 package tileworld.agent;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.Random;
 
 import sim.field.grid.ObjectGrid2D;
 import tileworld.environment.TWDirection;
@@ -32,7 +35,7 @@ import tileworld.planners.TWPath;
  * Description:
  *
  */
-public class MyAgent extends TWAgent{
+public class VoyagerAgent extends TWAgent{
 	private String name;
 	private int fuelX = -1;
 	private int fuelY = -1;
@@ -85,10 +88,13 @@ public class MyAgent extends TWAgent{
 	private int[][] match = new int[5][3];
 	private int[][] cutxMatch = new int[5][3];
 	private int[][] cutyMatch = new int[5][3];
+	private boolean justFueled = false;
+	private final int[][] randir = new int[][]{{1,1},{-1,1},{-1,-1},{-1,-1}};
+	private boolean hasRandDes = false;
+	private int fuelTime = 0;
 
-	
 
-	public MyAgent(String name, int xpos, int ypos, TWEnvironment env, double fuelLevel) {
+	public VoyagerAgent(String name, int xpos, int ypos, TWEnvironment env, double fuelLevel) {
 		super(xpos,ypos,env,fuelLevel);
 		this.name = name;
 		this.agentid = Character.getNumericValue((name.charAt(5)))-1;
@@ -646,10 +652,6 @@ public class MyAgent extends TWAgent{
 
 	protected TWThought think() {
 		step++;
-		if (this.getFuelLevel()<=1) {
-			System.out.println(name+" out of fuel!!!!!!!!!!!!!");
-		}
-		
 		if(this.firstBroadcast){
 			broadcast_position();
 		}
@@ -672,7 +674,7 @@ public class MyAgent extends TWAgent{
 			return new TWThought(TWAction.MOVE, TWDirection.Z);
 		}else if(step == 2){
 
-			int[][] agentLocs = MyAgent.originalPositions;
+			int[][] agentLocs = VoyagerAgent.originalPositions;
 			boundaryPoints = Tools.divideMap(5, maxX, maxY);
 			List<ArrayList<int[]>> candidates = Tools.getCandidates(boundaryPoints);
 			//	    	getDisAgentArea(candidates.get(0), 6, 0);
@@ -692,6 +694,9 @@ public class MyAgent extends TWAgent{
 			return new TWThought(TWAction.PUTDOWN, TWDirection.Z);
 		}
 		if (this.getX()==fuelX && this.getY()==fuelY){
+			this.justFueled = true;
+			this.hasRandDes = false;
+			this.fuelTime++;
 			return new TWThought(TWAction.REFUEL, TWDirection.Z);
 		}
 		//getMemory().getClosestObjectInSensorRange(TWTile.class);
@@ -741,6 +746,7 @@ public class MyAgent extends TWAgent{
 								scan_initial_X--; 
 							}
 							earlyPath = PG.findPath(this.getX(), this.getY(), scan_initial_X, scan_initial_Y);
+							break;
 
 					} 
 					//System.out.println(name+": target=("+scan_initial_X+","+scan_initial_Y+")");
@@ -751,9 +757,7 @@ public class MyAgent extends TWAgent{
 						return new TWThought(TWAction.MOVE, earlyPath.getStep(earlyStep).getDirection());
 					} else {
 						earlyPath = PG.findPath(this.getX(), this.getY(), scan_initial_X, scan_initial_Y);
-						if (earlyPath != null) {
-							return new TWThought(TWAction.MOVE, earlyPath.getStep(earlyStep).getDirection());
-						} 			
+						return new TWThought(TWAction.MOVE, earlyPath.getStep(earlyStep).getDirection());
 					}
 
 				}else{
@@ -776,67 +780,67 @@ public class MyAgent extends TWAgent{
 				 */
 
 				/*
-				//// 战's method 0right, 1left, 2down, 3up.
-				if (s1_substate == 3 && (toAreaUp <= 0 || changeDirection)){
-					if(0>=toAreaLeft){
-						s1_substate = 0;
-					}else{
-						s1_substate = 1;
+					//// 战's method 0right, 1left, 2down, 3up.
+					if (s1_substate == 3 && (toAreaUp <= 0 || changeDirection)){
+						if(0>=toAreaLeft){
+							s1_substate = 0;
+						}else{
+							s1_substate = 1;
+						}
+						shiftStep = 0;
+						shiftTime++;
+						changeDirection = false;
 					}
-					shiftStep = 0;
-					shiftTime++;
-					changeDirection = false;
-				}
-				else if (s1_substate == 0 && (toAreaRight <= 0 || changeDirection)) {
-					if(0>=toAreaDown){
-						s1_substate = 3;
-					}else{
-						s1_substate = 2;
+					else if (s1_substate == 0 && (toAreaRight <= 0 || changeDirection)) {
+						if(0>=toAreaDown){
+							s1_substate = 3;
+						}else{
+							s1_substate = 2;
+						}
+						shiftStep = 0;
+						shiftTime++;
+						changeDirection = false;
 					}
-					shiftStep = 0;
-					shiftTime++;
-					changeDirection = false;
-				}
 
-				else if (s1_substate == 2 && (toAreaDown <= 0 || changeDirection)) {
-					if(0>=toAreaLeft){
-						s1_substate = 0;
-					}else{
-						s1_substate = 1;
+					else if (s1_substate == 2 && (toAreaDown <= 0 || changeDirection)) {
+						if(0>=toAreaLeft){
+							s1_substate = 0;
+						}else{
+							s1_substate = 1;
+						}
+						shiftStep = 0;
+						shiftTime++;
+						changeDirection = false;
 					}
-					shiftStep = 0;
-					shiftTime++;
-					changeDirection = false;
-				}
 
-				else if (s1_substate == 1 && (toAreaLeft <= 0 || changeDirection)) {
-					if(0>=toAreaDown){
-						s1_substate = 3;
+					else if (s1_substate == 1 && (toAreaLeft <= 0 || changeDirection)) {
+						if(0>=toAreaDown){
+							s1_substate = 3;
+						}else{
+							s1_substate = 2;
+						}
+						shiftStep = 0;
+						shiftTime++;
+						changeDirection = false;
 					}else{
-						s1_substate = 2;
+						shiftStep++;
 					}
-					shiftStep = 0;
-					shiftTime++;
-					changeDirection = false;
-				}else{
-					shiftStep++;
-				}
-//				
-//				System.out.println("s1_substate:"+s1_substate+";changeDirection:"+changeDirection
-//						+";toAreaRight:"+toAreaRight+";toAreaLeft:"+toAreaLeft+";toAreaDown:"+toAreaDown+";toAreaUp:"+toAreaUp);
-//				
-//				System.out.println("shiftTime:"+shiftTime+";shiftStep:"+shiftStep);
-//				
-				if(shiftTime%2 == 1 && shiftStep == 6){
-					shiftStep = 0;
-					changeDirection = true;
-				}
+//					
+//					System.out.println("s1_substate:"+s1_substate+";changeDirection:"+changeDirection
+//							+";toAreaRight:"+toAreaRight+";toAreaLeft:"+toAreaLeft+";toAreaDown:"+toAreaDown+";toAreaUp:"+toAreaUp);
+//					
+//					System.out.println("shiftTime:"+shiftTime+";shiftStep:"+shiftStep);
+//					
+					if(shiftTime%2 == 1 && shiftStep == 6){
+						shiftStep = 0;
+						changeDirection = true;
+					}
 
-				if(firstMove){
-					shiftTime = 0;
-					firstMove = false;
-				}
-				 */
+					if(firstMove){
+						shiftTime = 0;
+						firstMove = false;
+					}
+					 */
 
 				int toLeft = this.getX() - 3;
 				int toRight = maxX - 4 - this.getX();
@@ -934,7 +938,7 @@ public class MyAgent extends TWAgent{
 				//				System.out.println(name+": substate="+s1_substate+"; current=("+this.getX()+","+this.getY()+"); target=("+this.targetX+","+this.targetY+")");
 				if (targetX == -1 && targetY == -1) {
 					state = 1;
-					System.out.println(name+" block over! substate="+s1_substate+"; current="+this.getX()+","+this.getY());
+					System.out.println(name+" block over! substate="+s1_substate);
 					return think();
 				}			
 				return new TWThought(TWAction.MOVE, earlyPath.getStep(earlyStep).getDirection());
@@ -946,41 +950,104 @@ public class MyAgent extends TWAgent{
 		} 
 
 
-		else if (this.getFuelLevel() > (this.getDistanceTo(fuelX, fuelY)+step/80+1)){
+		else if (this.getFuelLevel() > (this.getDistanceTo(fuelX, fuelY)+step/50+1)){
 			if (broadcasted_fuelstation == 0) {
 				message = "fuelstaion "+fuelX+" "+fuelY;
 				communicate();
 				broadcasted_fuelstation = 1;
 			}
 
+			if(justFueled){//生成随机位置,并前往的过程,还未到达目的地
+				System.out.println(name+": Start Voyaging");
+				//在一定范围内生成随机位置，让agent过去之后再探索，路上顺路采tile和hole
+				if(!this.hasRandDes){
+					//从最小距离到最大距离扩散
+					double s = 0.05;
+					double m = 0.45;
+					double bili = Double.valueOf(this.fuelTime)/10 * (m-s)+s;
+					System.out.println(name+"start calcualate dis");
+					int dis = (int)Math.floor((this.maxX>this.maxY?this.maxX:this.maxY)*bili);
+					System.out.println(name+"start generate random location");
+					dis = Math.min(dis, maxX+maxY);
+					int[] tmpDes = generateRandomPosition(this.getX(), this.getY(), dis);
+					System.out.println(name+": after genertate random location");
+					while(!isGood(tmpDes[0], tmpDes[1])){
+						System.out.println(name+": inside while is good");
+						tmpDes = generateRandomPosition(this.getX(), this.getY(), dis);
+					}
 
-			// 先视野后记忆
-			// ---------------------------------------------------------------
-			state3();
-			//// ---------------------------------------------------------------
-			/**
-			 * 判断一下到target的距离 + target到fuel station距离（path距离）是否油还够，不够直接回加油站
-			 */
-			if (targetX>=0 && targetY>=0){
-				currentPath = PG.findPath(this.getX(), this.getY(), targetX, targetY);
-				currentStep = 0;
-				if (currentPath != null) {
-					return new TWThought(TWAction.MOVE, currentPath.getStep(currentStep).getDirection());
+					this.scan_initial_X = tmpDes[0];
+					this.scan_initial_X = tmpDes[1];
+					this.hasRandDes = true;
+					System.out.println(this.name+"随机位置生成:"+tmpDes[0]+","+tmpDes[1]);
+					
 				}
-			} else {
-				/**
-				 * zs：改条件
-				 */
-//				if (this.getFuelLevel() / this.getDistanceTo(fuelX, fuelY)<2) {
-//					targetX = fuelX;
-//					targetY = fuelY;
-//				} else {
+				
+				//判断是否到达 scan_initial_X,scan_initial_Y
+//				System.out.println("scan_initial_X:"+scan_initial_X+"scan_initial_Y"+scan_initial_Y);
+				if (!(this.getX()==scan_initial_X && this.getY()==scan_initial_Y)) {
+
+					earlyPath = PG.findPath(this.getX(), this.getY(), scan_initial_X, scan_initial_Y);
+					earlyStep = 0;
+					int i = 1;
+					int[] tmpDes = null;
+					while (earlyPath == null) {
+							tmpDes = generateRandomPosition(scan_initial_X, scan_initial_Y, i);
+							
+							earlyPath = PG.findPath(this.getX(), this.getY(), tmpDes[0], tmpDes[1]);
+							i++;
+
+					}
+					if(tmpDes != null){
+						scan_initial_X = tmpDes[0];
+						scan_initial_Y = tmpDes[1];
+					}
+					
+					//System.out.println(name+": target=("+scan_initial_X+","+scan_initial_Y+")");
+					target_on_the_way(scan_initial_X,scan_initial_Y);
+					//					System.out.println(name+": corner=("+scan_initial_X+","+scan_initial_Y+"); target=("+targetX+" "+targetY+")");
+					earlyPath = PG.findPath(this.getX(), this.getY(), targetX, targetY);
+					if (earlyPath != null) {
+						return new TWThought(TWAction.MOVE, earlyPath.getStep(earlyStep).getDirection());
+					} else {
+						earlyPath = PG.findPath(this.getX(), this.getY(), scan_initial_X, scan_initial_Y);
+						return new TWThought(TWAction.MOVE, earlyPath.getStep(earlyStep).getDirection());
+					}					
+					
+				}else{//到达random destination
+					System.out.println(this.name+"已经到达随机位置");
+					this.justFueled = false;
+					this.hasRandDes = false;
 					return new TWThought(TWAction.MOVE,getRandomDirection());
-//				}
+				}
+				
+			}else{//正常state3
+				// 先视野后记忆
+				// ---------------------------------------------------------------
+				state3();
+				//// ---------------------------------------------------------------
+				/**
+				 * 判断一下到target的距离 + target到fuel station距离（path距离）是否油还够，不够直接回加油站
+				 */
+				if (targetX>=0 && targetY>=0){
+					currentPath = PG.findPath(this.getX(), this.getY(), targetX, targetY);
+					currentStep = 0;
+					if (currentPath != null) {
+						return new TWThought(TWAction.MOVE, currentPath.getStep(currentStep).getDirection());
+					}
+				} else {
+					/**
+					 * zs：改条件
+					 */
+//					if (this.getFuelLevel() / this.getDistanceTo(fuelX, fuelY)<2) {
+//						targetX = fuelX;
+//						targetY = fuelY;
+//					} else {
+						return new TWThought(TWAction.MOVE,getRandomDirection());
+//					}
+				}
 			}
-
-
-
+			
 		} else {
 			//没更新视野 state3()
 			
@@ -1233,7 +1300,7 @@ public class MyAgent extends TWAgent{
 
 		for (int i=startX;i<=endX;i++) {
 			for (int j=startY;j<=endY;j++) {
-//				String s = shared_memory[i][j];
+//					String s = shared_memory[i][j];
 				String s = null;
 				if(this.getMemory().getMemoryGrid().get(i, j) instanceof TWTile){
 					s = "Tile";
@@ -1253,7 +1320,7 @@ public class MyAgent extends TWAgent{
 					}
 					path_distance = path.getpath().size();
 					direct_distance = Math.abs(i-this.getX())+Math.abs(j-this.getY());
-//					System.out.println("Tile: "+name+" "+this.getX()+","+this.getY()+" "+i+","+j+"; path_distance="+path_distance+"; direct_distance="+direct_distance);
+//						System.out.println("Tile: "+name+" "+this.getX()+","+this.getY()+" "+i+","+j+"; path_distance="+path_distance+"; direct_distance="+direct_distance);
 					if (direct_distance <= tile_distance && path_distance == direct_distance) {
 						tile_distance = direct_distance;
 						result[0] = i;
@@ -1268,7 +1335,7 @@ public class MyAgent extends TWAgent{
 					}
 					path_distance = path.getpath().size();
 					direct_distance = Math.abs(i-this.getX())+Math.abs(j-this.getY());
-//					System.out.println("Hole: "+name+" "+this.getX()+","+this.getY()+" "+i+","+j+"; path_distance="+path_distance+"; direct_distance="+direct_distance);
+//						System.out.println("Hole: "+name+" "+this.getX()+","+this.getY()+" "+i+","+j+"; path_distance="+path_distance+"; direct_distance="+direct_distance);
 					if (direct_distance <= hole_distance && path_distance == direct_distance) {
 						hole_distance = direct_distance;
 						result[3] = i;
@@ -1318,4 +1385,37 @@ public class MyAgent extends TWAgent{
 			targetY = result[4];
 		}
 	}
+	
+	private int[] generateRandomPosition(int x, int y, int distance){
+		boolean isvalid = false;
+		Random random = new Random();
+		int destinationX = -1;
+		int destinationY = -1;
+		int looptime = 1;
+		while( !isvalid && looptime < 20){
+			System.out.println(name+": inside while is valid");
+			isvalid = true;
+			int shiftx = random.nextInt(distance);
+	    	int shifty = distance-shiftx;
+	    	int dir = random.nextInt(4);
+	    	shiftx *= this.randir[dir][0];
+	    	shifty *= this.randir[dir][1];
+	    	destinationX = x + shiftx;
+	    	destinationY = y + shifty;
+	    	if(destinationX<0 || destinationX>=this.maxX) isvalid = false;
+	    	if(destinationY<0 || destinationY>=this.maxY) isvalid = false;
+	    	looptime++;
+		}
+		if (!isvalid) {
+			if (name.equals("agent4")) {
+				return new int[]{maxX/4, maxY/4};
+			} else if (name.equals("agent5")) {
+				return new int[]{maxX/4*3, maxY/4*3};
+			}
+			
+		}
+		
+    	return new int[]{destinationX, destinationY};    	
+	}
 }
+

@@ -6,6 +6,8 @@ package tileworld;
 
 import sim.engine.SimState;
 import tileworld.environment.TWEnvironment;
+
+import java.io.FileOutputStream;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
@@ -23,9 +25,10 @@ import java.util.concurrent.TimeUnit;
  * versions of tileworld, including parameter sweeps.
  * 
  */
-public class TileworldMain {
+public class TileworldMain {	
 	
 	public static void main(String args[]) throws InterruptedException {
+		WriteFile.clearFile();
 		int overallScore = 0; 
 		int iteration = 10;
 		for(int i = 0; i<iteration; i++) {
@@ -43,6 +46,7 @@ public class TileworldMain {
 				steps = tw.schedule.getSteps();
 			}
 			System.out.println("The final reward is: "+tw.getReward());
+			WriteFile.writeFile(tw.getReward());
 			overallScore+=tw.getReward();
 			tw.finish();
 			TimeUnit.SECONDS.sleep(1);
@@ -69,6 +73,7 @@ public class TileworldMain {
 //            }
         }
         System.out.println("The final reward is: "+tw.getReward());
+        WriteFile.writeFile(tw.getReward());
         tw.finish();
         System.exit(0);  // make sure any threads finish up
     }
