@@ -958,28 +958,28 @@ public class VoyagerAgent extends TWAgent{
 			}
 
 			if(justFueled){//生成随机位置,并前往的过程,还未到达目的地
-				System.out.println(name+": Start Voyaging");
+				//System.out.println(name+": Start Voyaging");
 				//在一定范围内生成随机位置，让agent过去之后再探索，路上顺路采tile和hole
 				if(!this.hasRandDes){
 					//从最小距离到最大距离扩散
 					double s = 0.05;
 					double m = 0.45;
 					double bili = Double.valueOf(this.fuelTime)/10 * (m-s)+s;
-					System.out.println(name+"start calcualate dis");
+					//System.out.println(name+"start calcualate dis");
 					int dis = (int)Math.floor((this.maxX>this.maxY?this.maxX:this.maxY)*bili);
-					System.out.println(name+"start generate random location");
+					//System.out.println(name+"start generate random location");
 					dis = Math.min(dis, maxX+maxY);
 					int[] tmpDes = generateRandomPosition(this.getX(), this.getY(), dis);
-					System.out.println(name+": after genertate random location");
+					//System.out.println(name+": after genertate random location");
 					while(!isGood(tmpDes[0], tmpDes[1])){
-						System.out.println(name+": inside while is good");
+						//System.out.println(name+": inside while is good");
 						tmpDes = generateRandomPosition(this.getX(), this.getY(), dis);
 					}
 
 					this.scan_initial_X = tmpDes[0];
 					this.scan_initial_X = tmpDes[1];
 					this.hasRandDes = true;
-					System.out.println(this.name+"随机位置生成:"+tmpDes[0]+","+tmpDes[1]);
+					//System.out.println(this.name+"随机位置生成:"+tmpDes[0]+","+tmpDes[1]);
 					
 				}
 				
@@ -1393,7 +1393,7 @@ public class VoyagerAgent extends TWAgent{
 		int destinationY = -1;
 		int looptime = 1;
 		while( !isvalid && looptime < 20){
-			System.out.println(name+": inside while is valid");
+			//System.out.println(name+": inside while is valid");
 			isvalid = true;
 			int shiftx = random.nextInt(distance);
 	    	int shifty = distance-shiftx;
@@ -1411,6 +1411,12 @@ public class VoyagerAgent extends TWAgent{
 				return new int[]{maxX/4, maxY/4};
 			} else if (name.equals("agent5")) {
 				return new int[]{maxX/4*3, maxY/4*3};
+			} else if (name.equals("agent3")) {
+				return new int[]{maxX/4, maxY/4*3};
+			} else if (name.equals("agent2")) {
+				return new int[]{maxX/4*3, maxY/4};
+			} else if (name.equals("agent1")) {
+				return new int[]{maxX/2, maxY/2};
 			}
 			
 		}
